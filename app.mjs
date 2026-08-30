@@ -1,6 +1,7 @@
 import {
   getTrainingSetForDate, gradeSentence, loadLearningState, recordSubmission, saveLearningState,
   STORAGE_KEY, toggleCollocation, toggleMastered, trainingSets, getExtraPractice, getPracticeAdvice, isVerifiedPastPaper,
+  canSubmitPassage, fullPassageSets, getExtraPassagePractice, getPassageForDate, gradePassage,
 } from "./core.mjs";
 import { deleteAttemptImage, saveAttemptImage, validateImageFile } from "./image-store.mjs";
 
@@ -9,11 +10,11 @@ const today = new Date();
 const dateKey = today.toISOString().slice(0, 10);
 let state = loadLearningState(window.localStorage);
 let activeView = "practice";
-let selectedSetId = getTrainingSetForDate(today).id;
+let selectedSetId = getPassageForDate(today).id;
 let reviewFilter = "pending";
 let pendingPhoto = null;
 
-function currentSet() { return trainingSets.find((set) => set.id === selectedSetId) || trainingSets[0]; }
+function currentSet() { return fullPassageSets.find((set) => set.id === selectedSetId) || getPassageForDate(today); }
 function escapeHtml(value) { return String(value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char])); }
 function persist(next) { state = next; const saved = saveLearningState(state, window.localStorage); if (!saved) toast("浏览器未能保存记录，刷新后可能会丢失。", "warn"); updateShell(); }
 function toast(message, style = "") { const item = document.querySelector("#toast-template").content.firstElementChild.cloneNode(true); item.textContent = message; item.classList.add(style); document.body.append(item); setTimeout(() => item.remove(), 3400); }
@@ -24,20 +25,19 @@ function updateShell() {
   document.querySelectorAll("[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === activeView));
 }
 function dayLabel() { return new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "short" }).format(today); }
-function answersFor(setId) { return state.submissions[setId]?.answers ?? ["", ""]; }
+function answersFor(setId) { return state.submissions[setId]?.answer ?? ""; }
 function hasSubmitted(setId) { return Boolean(state.submissions[setId]); }
 
 function renderPractice() {
-  const set = currentSet(); const submitted = hasSubmitted(set.id); const answers = answersFor(set.id);
-  const examMeta = isVerifiedPastPaper(set) ? `<a class="source-chip" href="${set.exam.sourceUrl}" target="_blank" rel="noreferrer">真题 · ${set.exam.year} 年 ${set.exam.month} 月 ${set.exam.paper} · 查看来源 ↗</a>` : `<div class="source-chip">${set.kind === "prediction" ? "原创预测 · 非真题" : "同主题训练"}</div>`;
-  content.innerHTML = `<header class="topbar"><div><p class="eyebrow">${dayLabel()} · DAILY PRACTICE</p><h1>今天，译得更准确一点。</h1></div><button type="button" class="day-picker" id="set-picker">第 ${trainingSets.findIndex((item) => item.id === set.id) + 1} 组 <span>⌄</span></button></header>
-  <div class="picker-panel" id="picker-panel" hidden>${trainingSets.map((item, index) => `<button type="button" data-set-id="${item.id}" class="${item.id === set.id ? "selected" : ""}"><small>第 ${String(index + 1).padStart(2, "0")} 组</small>${escapeHtml(item.theme)}${hasSubmitted(item.id) ? "<b>已完成</b>" : ""}</button>`).join("")}</div>
-  <section class="practice-intro">${examMeta}<div><p class="section-kicker">今日主题</p><h2>${escapeHtml(set.theme)}</h2></div><p>同一段材料中的两句话。先独立完成，再看解析。</p></section>
-  <section class="photo-box"><div><p class="section-kicker">手写稿（可选）</p><b>先拍照留档，再把英文补录到下方。</b><small>照片只保存在当前浏览器，支持图片且不超过 8MB。</small></div><label class="photo-upload" for="handwritten-photo">＋ 上传或拍照<input id="handwritten-photo" type="file" accept="image/*" capture="environment" hidden></label><div id="photo-preview">${pendingPhoto ? `<img src="${pendingPhoto.url}" alt="手写译文预览"><button type="button" id="remove-photo">删除照片</button>` : ""}</div></section>
-  <form id="practice-form" novalidate>
-  <div class="sentence-list">${set.sentences.map((sentence, index) => `<article class="sentence-card ${submitted ? "is-submitted" : ""}"><div class="sentence-index">0${index + 1}</div><div class="sentence-main"><p class="chinese-sentence">${escapeHtml(sentence.chinese)}</p><label for="answer-${index}">你的英文译文 <span>建议 ${index === 0 ? "25–40" : "30–50"} 词</span></label><textarea id="answer-${index}" name="answer-${index}" rows="4" placeholder="在这里写下你的译文…" ${submitted ? "readonly" : ""}>${escapeHtml(answers[index])}</textarea><div class="word-row"><span class="input-error" id="error-${index}"></span><span><b id="word-${index}">${answers[index].trim() ? answers[index].trim().split(/\s+/).length : 0}</b> words</span></div>${submitted ? feedbackHtml(sentence, state.submissions[set.id].results[index]) : ""}</div></article>`).join("")}</div>
-  ${submitted ? `<div class="completed-row"><span>✓</span><div><b>这组练习已完成</b><p>已为你沉淀易错点与可复习表达。</p></div><button class="secondary-button" type="button" id="review-now">去复习本</button></div>` : `<div class="submit-row"><p><span>提示</span>提交后才能看到英文参考答案与逐句分析。</p><button class="primary-button" type="submit">提交并查看解析 <span>→</span></button></div>`}
-  </form>`;
+  const set = currentSet(); const submitted = hasSubmitted(set.id); const answer = answersFor(set.id); const submission = state.submissions[set.id];
+  const examMeta = isVerifiedPastPaper(set) ? `<a class="source-chip" href="${set.exam.sourceUrl}" target="_blank" rel="noreferrer">真题 · ${set.exam.year} 年 ${set.exam.month} 月 ${escapeHtml(set.exam.paper)} · 查看来源 ↗</a>` : `<div class="source-chip">原创预测 · 非真题</div>`;
+  content.innerHTML = `<header class="topbar"><div><p class="eyebrow">${dayLabel()} · DAILY PRACTICE</p><h1>今天，完整译完一篇。</h1></div><button type="button" class="day-picker" id="set-picker">题库 <span>⌄</span></button></header>
+  <div class="picker-panel" id="picker-panel" hidden>${fullPassageSets.map((item, index) => `<button type="button" data-set-id="${item.id}" class="${item.id === set.id ? "selected" : ""}"><small>第 ${String(index + 1).padStart(2, "0")} 篇 · ${item.kind === "past-paper" ? "可核验真题" : "原创预测"}</small>${escapeHtml(item.theme)}${hasSubmitted(item.id) ? "<b>已完成</b>" : ""}</button>`).join("")}</div>
+  <section class="practice-intro">${examMeta}<div><p class="section-kicker">今日整篇翻译</p><h2>${escapeHtml(set.theme)}</h2></div><p>提交前只显示中文全文；完成后展开参考译文与逐句报告。</p></section>
+  <section class="sentence-card"><div class="sentence-index">全文</div><div class="sentence-main"><p class="chinese-sentence">${escapeHtml(set.sourceText)}</p></div></section>
+  <section class="photo-box"><div><p class="section-kicker">手写稿（可选）</p><b>拍照留档后，请把完整英文补录到下方。</b><small>照片只保存在当前浏览器，支持图片且不超过 8MB。</small></div><label class="photo-upload" for="handwritten-photo">＋ 上传或拍照<input id="handwritten-photo" type="file" accept="image/*" capture="environment" hidden></label><div id="photo-preview">${pendingPhoto ? `<img src="${pendingPhoto.url}" alt="手写译文预览"><button type="button" id="remove-photo">删除照片</button>` : ""}</div></section>
+  <form id="practice-form" novalidate><section class="sentence-card"><div class="sentence-index">EN</div><div class="sentence-main"><label for="passage-answer">你的完整英文译文 <span>建议按原文逻辑分段并使用句末标点</span></label><textarea id="passage-answer" rows="12" placeholder="在这里补录整篇英文译文…" ${submitted ? "readonly" : ""}>${escapeHtml(answer)}</textarea><div class="word-row"><span class="input-error" id="input-error"></span><span><b id="word-count">${answer ? answer.split(/\s+/).length : 0}</b> words</span></div></div></section>
+  ${submitted ? `<section class="feedback"><div class="feedback-head"><span>整篇总览</span><strong>${submission.coverage}% <em>要点覆盖率</em></strong></div><div class="reference"><p>参考译文（学习版）</p><blockquote>${escapeHtml(set.referenceText)}</blockquote></div><p class="local-note">${submission.alignment === "exact" ? "已按你的英文句末标点逐句对齐。" : "你的分句与原文单元未完全对应，以下按整篇译文给出逐句提示。"}</p>${set.sentences.map((sentence, index) => `<article class="sentence-card"><div class="sentence-index">0${index + 1}</div><div class="sentence-main"><p class="chinese-sentence">${escapeHtml(sentence.sourceText)}</p>${feedbackHtml(sentence, submission.results[index])}</div></article>`).join("")}</section><div class="completed-row"><span>✓</span><div><b>整篇练习已完成</b><p>答案、易错点与搭配已收进本地报告。</p></div><button class="secondary-button" type="button" id="review-now">去复习本</button></div>` : `<div class="submit-row"><p><span>提示</span>照片不能代替英文补录；提交后才能看参考译文。</p><button class="primary-button" type="submit">提交并查看整篇报告 <span>→</span></button></div>`}</form>`;
   bindPracticeEvents(set, submitted);
 }
 
@@ -45,22 +45,21 @@ function feedbackHtml(sentence, result) {
   const matched = result.matched.length ? result.matched.map((item) => `<li><span>✓</span>${escapeHtml(item.label)}</li>`).join("") : "<li class=muted>本地规则尚未识别到已覆盖的要点。</li>";
   const missed = result.missed.length ? result.missed.map((item) => `<li><span>!</span><div><b>${escapeHtml(item.label)}</b><p>${escapeHtml(item.advice)}</p></div></li>`).join("") : "<li class=success-line><span>✓</span>这一句的核心要点都已覆盖。</li>";
   const notices = result.notices.map((notice) => `<p class="notice">⌁ ${escapeHtml(notice)}</p>`).join("");
-  return `<section class="feedback"><div class="feedback-head"><span>提交后解析</span><strong>${result.coverage}% <em>要点覆盖率</em></strong></div><div class="reference"><p>参考译文</p><blockquote>${escapeHtml(sentence.reference)}</blockquote></div><div class="feedback-grid"><div><h4>已覆盖的要点</h4><ul class="matched-list">${matched}</ul></div><div><h4>建议留意</h4><ul class="missed-list">${missed}</ul></div></div>${notices}<div class="collocation-area"><h4>本句固定搭配</h4><div class="collocation-chips">${sentence.collocations.map((item) => { const saved = state.collocations[item.id]; return `<button type="button" class="collocation-chip ${saved ? "saved" : ""}" data-collocation-id="${item.id}" data-sentence-id="${sentence.id}" title="${escapeHtml(item.meaning)}：${escapeHtml(item.example)}">${saved ? "✓ " : "+ "}${escapeHtml(item.expression)}</button>`; }).join("")}</div><p>点击收藏到复习本；悬停可看含义和例句。</p></div><p class="local-note">本地规则会检查核心表达，但无法识别所有合理的同义改写；请结合参考译文判断。</p></section>`;
+  return `<section class="feedback"><div class="feedback-head"><span>逐句解析</span><strong>${result.coverage}% <em>要点覆盖率</em></strong></div><div class="reference"><p>本句参考译文</p><blockquote>${escapeHtml(sentence.referenceText || sentence.reference)}</blockquote></div><div class="feedback-grid"><div><h4>已覆盖的要点</h4><ul class="matched-list">${matched}</ul></div><div><h4>建议留意</h4><ul class="missed-list">${missed}</ul></div></div>${notices}<div class="collocation-area"><h4>本句固定搭配</h4><div class="collocation-chips">${sentence.collocations.map((item) => { const saved = state.collocations[item.id]; return `<button type="button" class="collocation-chip ${saved ? "saved" : ""}" data-collocation-id="${item.id}" data-sentence-id="${sentence.id}" title="${escapeHtml(item.meaning)}：${escapeHtml(item.example)}">${saved ? "✓ " : "+ "}${escapeHtml(item.expression)}</button>`; }).join("")}</div><p>点击收藏到复习本；悬停可看含义和例句。</p></div><p class="local-note">本地规则会检查核心表达，但无法识别所有合理的同义改写；请结合参考译文判断。</p></section>`;
 }
 
 function bindPracticeEvents(set, submitted) {
   document.querySelector("#set-picker").addEventListener("click", () => { const panel = document.querySelector("#picker-panel"); panel.hidden = !panel.hidden; });
   document.querySelectorAll("[data-set-id]").forEach((button) => button.addEventListener("click", () => { selectedSetId = button.dataset.setId; render(); }));
   if (!submitted) {
-    [0, 1].forEach((index) => document.querySelector(`#answer-${index}`).addEventListener("input", (event) => { const words = event.target.value.trim() ? event.target.value.trim().split(/\s+/).length : 0; document.querySelector(`#word-${index}`).textContent = words; document.querySelector(`#error-${index}`).textContent = ""; }));
+    document.querySelector("#passage-answer").addEventListener("input", (event) => { const words = event.target.value.trim() ? event.target.value.trim().split(/\s+/).length : 0; document.querySelector("#word-count").textContent = words; document.querySelector("#input-error").textContent = ""; });
     document.querySelector("#practice-form").addEventListener("submit", (event) => {
-      event.preventDefault(); const answers = [0, 1].map((index) => document.querySelector(`#answer-${index}`).value.trim()); let invalid = false;
-      answers.forEach((answer, index) => { if (!answer) { invalid = true; document.querySelector(`#error-${index}`).textContent = "请先完成这一句。"; } });
-      if (invalid) { document.querySelector(`#answer-${answers.findIndex((answer) => !answer)}`).focus(); toast("两句话都完成后，才能查看解析。", "warn"); return; }
-      const results = set.sentences.map((sentence, index) => gradeSentence(sentence, answers[index]));
-      persist(recordSubmission(state, { setId: set.id, date: dateKey, answers, results, imageKey: pendingPhoto?.key || null }));
+      event.preventDefault(); const answer = document.querySelector("#passage-answer").value.trim();
+      if (!canSubmitPassage(answer)) { document.querySelector("#input-error").textContent = "请先补录完整英文译文。"; document.querySelector("#passage-answer").focus(); toast("补录完整英文后，才能查看解析。", "warn"); return; }
+      const report = gradePassage(set, answer);
+      persist(recordSubmission(state, { setId: set.id, date: dateKey, answer, ...report, imageKey: pendingPhoto?.key || null }));
       if (pendingPhoto?.file) saveAttemptImage(pendingPhoto.key, pendingPhoto.file);
-      render(); toast("练习已收下，解析已展开。", "success");
+      render(); toast("整篇练习已收下，报告已展开。", "success");
     });
   } else {
     document.querySelector("#review-now").addEventListener("click", () => { activeView = "review"; render(); });
@@ -88,21 +87,21 @@ function renderReview() {
 }
 
 function renderLibrary() {
-  const cards = trainingSets.map((set) => `<article class="phrase-card"><div class="phrase-main"><span class="phrase-status ${set.kind === "past-paper" ? "mastered" : ""}">${set.kind === "past-paper" ? `${set.exam.year} 年 ${set.exam.month} 月 ${set.exam.paper} 真题` : set.kind === "prediction" ? "原创预测 · 非真题" : "同主题训练"}</span><h3>${escapeHtml(set.theme)}</h3><p>${escapeHtml(set.sourceLabel)}</p></div><button class="master-button" data-library-set="${set.id}">${hasSubmitted(set.id) ? "查看练习" : "开始练习"}</button></article>`).join("");
+  const cards = fullPassageSets.map((set) => `<article class="phrase-card"><div class="phrase-main"><span class="phrase-status ${set.kind === "past-paper" ? "mastered" : ""}">${set.kind === "past-paper" ? `${set.exam.year} 年 ${set.exam.month} 月 ${set.exam.paper} 真题` : "原创预测 · 非真题"}</span><h3>${escapeHtml(set.theme)}</h3><p>${escapeHtml(set.sourceLabel)} · 整篇翻译</p></div><button class="master-button" data-library-set="${set.id}">${hasSubmitted(set.id) ? "查看报告" : "开始练习"}</button></article>`).join("");
   content.innerHTML = `<header class="topbar"><div><p class="eyebrow">PAPER LIBRARY</p><h1>真题可核验，<br>加练随时开始。</h1></div></header><section class="view-intro"><div><p class="section-kicker">题库</p><h2>真题、训练与预测分开记录。</h2></div></section><div class="phrase-list">${cards}</div>`;
   document.querySelectorAll("[data-library-set]").forEach((button) => button.addEventListener("click", () => { selectedSetId = button.dataset.librarySet; activeView = "practice"; render(); }));
 }
 
 function renderReports() {
   const entries = Object.entries(state.submissions).sort((a, b) => (b[1].date || "").localeCompare(a[1].date || ""));
-  content.innerHTML = `<header class="topbar"><div><p class="eyebrow">MY REPORTS</p><h1>每一次练习，<br>都有迹可循。</h1></div><div class="big-count"><b>${entries.length}</b><span>已完成练习</span></div></header>${entries.length ? `<div class="phrase-list">${entries.map(([setId, entry]) => { const set = trainingSets.find((item) => item.id === setId); const percent = Math.round(entry.results.reduce((sum, item) => sum + item.coverage, 0) / entry.results.length); return `<article class="phrase-card"><div class="phrase-main"><span class="phrase-status">${escapeHtml(set?.sourceLabel || "历史练习")}</span><h3>${escapeHtml(set?.theme || setId)}</h3><p>我的答案：${escapeHtml(entry.answers.join(" / "))}</p><blockquote>要点覆盖率 ${percent}% · ${entry.imageKey ? "已附手写稿" : "文字作答"}</blockquote></div><button class="master-button" data-report-set="${setId}">查看解析</button></article>`; }).join("")}</div>` : emptyStateHtml("◫", "还没有练习报告", "完成一组训练后，你的答案、错误和建议都会沉淀在这里。", "开始今日训练", "practice")}`;
+  content.innerHTML = `<header class="topbar"><div><p class="eyebrow">MY REPORTS</p><h1>每一次练习，<br>都有迹可循。</h1></div><div class="big-count"><b>${entries.length}</b><span>已完成练习</span></div></header>${entries.length ? `<div class="phrase-list">${entries.map(([setId, entry]) => { const set = fullPassageSets.find((item) => item.id === setId); const percent = entry.coverage ?? Math.round((entry.results || []).reduce((sum, item) => sum + item.coverage, 0) / Math.max((entry.results || []).length, 1)); const text = entry.answer || (entry.answers || []).join(" / "); return `<article class="phrase-card"><div class="phrase-main"><span class="phrase-status">${escapeHtml(set?.sourceLabel || "历史两句练习")}</span><h3>${escapeHtml(set?.theme || setId)}</h3><p>我的答案：${escapeHtml(text)}</p><blockquote>要点覆盖率 ${percent}% · ${entry.imageKey ? "已附手写稿" : "文字作答"}</blockquote></div>${set ? `<button class="master-button" data-report-set="${setId}">查看解析</button>` : "<span class=phrase-status>旧记录保留</span>"}</article>`; }).join("")}</div>` : emptyStateHtml("◫", "还没有练习报告", "完成一组训练后，你的答案、错误和建议都会沉淀在这里。", "开始今日训练", "practice")}`;
   document.querySelectorAll("[data-report-set]").forEach((button) => button.addEventListener("click", () => { selectedSetId = button.dataset.reportSet; activeView = "practice"; render(); }));
 }
 
 function emptyStateHtml(mark, title, copy, action, view) { return `<section class="empty-state"><span>${mark}</span><h2>${title}</h2><p>${copy}</p><button class="primary-button" type="button" data-empty-view="${view}">${action} <i>→</i></button></section>`; }
 function bindNav() {
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.view; render(); }));
-  document.querySelector("#reset-button").addEventListener("click", () => { if (window.confirm("确定要清空所有练习记录、易错点和复习本吗？此操作无法撤销。")) { window.localStorage.removeItem(STORAGE_KEY); state = loadLearningState(window.localStorage); selectedSetId = getTrainingSetForDate(today).id; activeView = "practice"; render(); toast("本地学习记录已重置。", "success"); } });
+  document.querySelector("#reset-button").addEventListener("click", () => { if (window.confirm("确定要清空所有练习记录、易错点和复习本吗？此操作无法撤销。")) { window.localStorage.removeItem(STORAGE_KEY); state = loadLearningState(window.localStorage); selectedSetId = getPassageForDate(today).id; activeView = "practice"; render(); toast("本地学习记录已重置。", "success"); } });
 }
 function render() { updateShell(); if (activeView === "practice") renderPractice(); else if (activeView === "mistakes") renderMistakes(); else if (activeView === "library") renderLibrary(); else if (activeView === "reports") renderReports(); else renderReview(); document.querySelectorAll("[data-empty-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.emptyView; if (activeView === "review") reviewFilter = "pending"; render(); })); }
 bindNav(); render();

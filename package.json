@@ -1,0 +1,13 @@
+{
+  "name": "yike-cet6-translation-practice",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test core.test.mjs image-store.test.mjs lib/*.test.mjs",
+    "build": "node --check core.mjs && node --check app.mjs && node --check image-store.mjs && node --check lib/netlify-blob-store.mjs && node --check netlify/functions/passages.mjs && node --check netlify/functions/review-candidate.mjs && node --check netlify/functions/scan-candidates.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.0.2"
+  }
+}

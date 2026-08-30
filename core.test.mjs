@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   createEmptyState,
   canSubmitAttempt,
+  canSubmitPassage,
+  fullPassageSets,
+  getPassageForDate,
   getExtraPractice,
   isVerifiedPastPaper,
   gradeSentence,
@@ -63,4 +66,20 @@ test("extra practice prefers unfinished past papers", () => {
 test("a photo never replaces the two typed answers required for grading", () => {
   assert.equal(canSubmitAttempt(["Answer one.", ""], "photo-1"), false);
   assert.equal(canSubmitAttempt(["Answer one.", "Answer two."], "photo-1"), true);
+});
+
+test("requires a full passage answer before grading", () => {
+  assert.equal(canSubmitPassage(""), false);
+  assert.equal(canSubmitPassage("Mooncakes"), false);
+  assert.equal(canSubmitPassage("A complete translation."), true);
+});
+
+test("daily practice uses a verified full past-paper passage", () => {
+  const passage = getPassageForDate(new Date("2026-08-30"));
+  assert.ok(fullPassageSets.length >= 2);
+  assert.equal(passage.kind, "past-paper");
+  assert.ok(isVerifiedPastPaper(passage));
+  assert.ok(passage.sourceText.length > 80);
+  assert.ok(passage.referenceText.length > 80);
+  assert.ok(passage.sentences.length >= 2);
 });

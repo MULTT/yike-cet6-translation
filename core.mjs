@@ -118,9 +118,9 @@ trainingSets.forEach((set) => {
 trainingSets.unshift({
   id: "cet6-2013-12-mid-autumn",
   kind: "past-paper",
-  sourceLabel: "2013 年 12 月 CET-6 真题 · 第 1 套",
+  sourceLabel: "2013 年 12 月 CET-6 真题 · 文都版（套卷未标注）",
   theme: "中秋节：团圆与传统",
-  exam: { year: 2013, month: 12, paper: "第 1 套", sourceName: "文都教育：2013年12月大学英语六级考试真题", sourceUrl: "https://www.wendu.com/uploadfile/2017/1123/20171123094145760.pdf" },
+  exam: { year: 2013, month: 12, paper: "文都版（套卷未标注）", sourceName: "文都教育：2013年12月大学英语六级考试真题", sourceUrl: "https://www.wendu.com/uploadfile/2017/1123/20171123094145760.pdf" },
   sentences: [
     { id: "mid-autumn-1", order: 1, chinese: "中国人自古以来就在中秋时节庆祝丰收，这与北美地区庆祝感恩节的习俗十分相似。", reference: "Since ancient times, Chinese people have celebrated the harvest during the Mid-Autumn Festival, much as people in North America celebrate Thanksgiving.", rubric: [{ id: "since-ancient", category: "搭配", label: "since ancient times", alternatives: ["since ancient times", "for centuries"], advice: "“自古以来”可用 since ancient times。" }, { id: "celebrate-harvest", category: "搭配", label: "celebrate the harvest", alternatives: ["celebrate the harvest", "celebrate harvest"], advice: "“庆祝丰收”可用 celebrate the harvest。" }, { id: "similar-custom", category: "表达", label: "similar to", alternatives: ["similar to", "much as"], advice: "比较两种习俗时可用 be similar to 或 much as。" }], collocations: [{ id: "since-ancient", expression: "since ancient times", meaning: "自古以来", example: "Tea has been enjoyed in China since ancient times." }] },
     { id: "mid-autumn-2", order: 2, chinese: "过中秋节的习俗在唐代早期开始在中国各地流行。", reference: "The tradition of celebrating the Mid-Autumn Festival became popular throughout China in the early Tang Dynasty.", rubric: [{ id: "tradition-of", category: "搭配", label: "the tradition of doing", alternatives: ["the tradition of celebrating", "tradition of celebrating"], advice: "“……的习俗”常用 the tradition of doing。" }, { id: "became-popular", category: "表达", label: "became popular", alternatives: ["became popular", "grew popular"], advice: "“开始流行”可用 became popular。" }, { id: "throughout", category: "词汇", label: "throughout China", alternatives: ["throughout china", "across china"], advice: "“在中国各地”可用 throughout China。" }], collocations: [{ id: "throughout-china", expression: "throughout China", meaning: "遍及中国各地", example: "The custom spread throughout China." }] },
@@ -133,9 +133,59 @@ trainingSets.push({ id: "prediction-green-life", kind: "prediction", sourceLabel
   { id: "prediction-2", order: 2, chinese: "这种改变不仅改善了空气质量，也使社区生活更加便利。", reference: "This change not only improves air quality but also makes community life more convenient.", rubric: [{ id: "not-only-pred", category: "语法", label: "not only ... but also", alternatives: ["not only", "but also"], advice: "并列强调可用 not only ... but also。" }], collocations: [{ id: "air-quality", expression: "improve air quality", meaning: "改善空气质量", example: "Trees can improve air quality." }] },
 ], sentencePatterns: [{ function: "表达措施的双重效果", frame: "... not only ... but also ...", example: "This change not only improves air quality but also makes community life more convenient." }] });
 
+const midAutumnExam = { year: 2013, month: 12, paper: "文都版（套卷未标注）", sourceName: "文都教育：2013年12月大学英语六级考试真题", sourceUrl: "https://www.wendu.com/uploadfile/2017/1123/20171123094145760.pdf" };
+
+export const fullPassageSets = [
+  {
+    id: "cet6-2013-12-mid-autumn-full", kind: "past-paper", sourceLabel: "2013 年 12 月 CET-6 真题 · 文都版（套卷未标注）", exam: midAutumnExam, theme: "中秋节：团圆与传统",
+    sourceText: "中国人自古以来就在中秋时节庆祝丰收，这与北美地区庆祝感恩节的习俗十分相似。过中秋节的习俗与唐代早期在中国各地开始流行，中秋节在农历八月十五，是人们拜月的节日，这天夜晚皓月当空，人们合家团聚，共赏明月。2006 年，中秋节被列为中国的文化遗产，2008 年又被定为公共假日，月饼被视为中秋节不可或缺的美食，人们将月饼作为礼物馈赠亲友或在家庭聚会上享用。传统的月饼上带有寿（longevity）、福或和等字样。",
+    referenceText: "Since ancient times, Chinese people have celebrated the harvest during the Mid-Autumn Festival, much as people in North America celebrate Thanksgiving. The custom of celebrating the Mid-Autumn Festival became popular throughout China in the early Tang Dynasty. Falling on the fifteenth day of the eighth lunar month, the festival is a day for worshipping the moon. On that night, when the moon shines brightly, families gather to admire it together. In 2006, the Mid-Autumn Festival was listed as part of China's cultural heritage and was designated a public holiday in 2008. Mooncakes, an indispensable festival food, are given to relatives and friends as gifts or enjoyed at family gatherings. Traditional mooncakes often bear Chinese characters such as shou (longevity), fu (good fortune), and he (harmony).",
+    sentences: [
+      { id: "mid-autumn-full-1", order: 1, sourceText: "中国人自古以来就在中秋时节庆祝丰收，这与北美地区庆祝感恩节的习俗十分相似。", referenceText: "Since ancient times, Chinese people have celebrated the harvest during the Mid-Autumn Festival, much as people in North America celebrate Thanksgiving.", rubric: [{ id: "full-since-ancient", category: "搭配", label: "since ancient times", alternatives: ["since ancient times", "for centuries"], advice: "“自古以来”可用 since ancient times。" }, { id: "full-celebrate-harvest", category: "搭配", label: "celebrate the harvest", alternatives: ["celebrate the harvest"], advice: "“庆祝丰收”常用 celebrate the harvest。" }, { id: "full-much-as", category: "表达", label: "much as / similar to", alternatives: ["much as", "similar to"], advice: "比较两种习俗可用 much as 或 be similar to。" }], collocations: [{ id: "full-mid-autumn", expression: "during the Mid-Autumn Festival", meaning: "在中秋节期间", example: "Families reunite during the Mid-Autumn Festival." }] },
+      { id: "mid-autumn-full-2", order: 2, sourceText: "过中秋节的习俗与唐代早期在中国各地开始流行，中秋节在农历八月十五，是人们拜月的节日，这天夜晚皓月当空，人们合家团聚，共赏明月。", referenceText: "The custom of celebrating the Mid-Autumn Festival became popular throughout China in the early Tang Dynasty. Falling on the fifteenth day of the eighth lunar month, the festival is a day for worshipping the moon. On that night, when the moon shines brightly, families gather to admire it together.", rubric: [{ id: "full-became-popular", category: "表达", label: "became popular throughout China", alternatives: ["became popular throughout china", "became popular across china"], advice: "“开始在中国各地流行”可用 became popular throughout China。" }, { id: "full-lunar-month", category: "词汇", label: "the fifteenth day of the eighth lunar month", alternatives: ["fifteenth day of the eighth lunar month", "15th day of the eighth lunar month"], advice: "农历日期可用 the fifteenth day of the eighth lunar month。" }, { id: "full-family-gather", category: "搭配", label: "families gather / reunite", alternatives: ["families gather", "families reunite", "family members gather"], advice: "“合家团聚”可用 families gather 或 families reunite。" }], collocations: [{ id: "full-throughout", expression: "throughout China", meaning: "遍及中国各地", example: "The custom became popular throughout China." }] },
+      { id: "mid-autumn-full-3", order: 3, sourceText: "2006 年，中秋节被列为中国的文化遗产，2008 年又被定为公共假日，月饼被视为中秋节不可或缺的美食，人们将月饼作为礼物馈赠亲友或在家庭聚会上享用。", referenceText: "In 2006, the Mid-Autumn Festival was listed as part of China's cultural heritage and was designated a public holiday in 2008. Mooncakes, an indispensable festival food, are given to relatives and friends as gifts or enjoyed at family gatherings.", rubric: [{ id: "full-listed-heritage", category: "语法", label: "was listed as", alternatives: ["was listed as", "was included in"], advice: "“被列为”可用被动语态 was listed as。" }, { id: "full-designated-holiday", category: "表达", label: "was designated a public holiday", alternatives: ["designated a public holiday", "declared a public holiday"], advice: "“被定为公共假日”可用 be designated a public holiday。" }, { id: "full-indispensable", category: "词汇", label: "an indispensable festival food", alternatives: ["indispensable festival food", "indispensable food"], advice: "“不可或缺的美食”可用 an indispensable festival food。" }], collocations: [{ id: "full-family-gatherings", expression: "at family gatherings", meaning: "在家庭聚会上", example: "Mooncakes are enjoyed at family gatherings." }] },
+      { id: "mid-autumn-full-4", order: 4, sourceText: "传统的月饼上带有寿（longevity）、福或和等字样。", referenceText: "Traditional mooncakes often bear Chinese characters such as shou (longevity), fu (good fortune), and he (harmony).", rubric: [{ id: "full-bear-characters", category: "词汇", label: "bear Chinese characters", alternatives: ["bear chinese characters", "have chinese characters", "feature chinese characters"], advice: "“带有字样”可用 bear / feature Chinese characters。" }, { id: "full-such-as", category: "表达", label: "such as", alternatives: ["such as"], advice: "举例可用 such as。" }], collocations: [{ id: "full-good-fortune", expression: "good fortune", meaning: "福；好运", example: "The character fu represents good fortune." }] },
+    ],
+  },
+  {
+    id: "prediction-community-service-full", kind: "prediction", sourceLabel: "原创预测 · 非真题", theme: "社区服务：适老化与志愿参与",
+    sourceText: "随着人口老龄化，越来越多的社区正在改善面向老年人的医疗、出行和日常照料服务。志愿者定期探望独居老人，帮助他们解决生活中的实际困难。这样的服务不仅提高了老年人的生活质量，也让邻里关系更加紧密。",
+    referenceText: "As the population ages, an increasing number of communities are improving medical care, transportation, and daily support for older people. Volunteers regularly visit elderly people who live alone and help them deal with practical difficulties in daily life. Such services not only improve older people's quality of life but also bring neighbors closer together.",
+    sentences: [
+      { id: "prediction-full-1", order: 1, sourceText: "随着人口老龄化，越来越多的社区正在改善面向老年人的医疗、出行和日常照料服务。", referenceText: "As the population ages, an increasing number of communities are improving medical care, transportation, and daily support for older people.", rubric: [{ id: "prediction-aging", category: "表达", label: "as the population ages", alternatives: ["as the population ages", "with an aging population"], advice: "“随着人口老龄化”可用 As the population ages。" }], collocations: [{ id: "prediction-daily-support", expression: "daily support", meaning: "日常照料", example: "The center provides daily support for older people." }] },
+      { id: "prediction-full-2", order: 2, sourceText: "志愿者定期探望独居老人，帮助他们解决生活中的实际困难。", referenceText: "Volunteers regularly visit elderly people who live alone and help them deal with practical difficulties in daily life.", rubric: [{ id: "prediction-live-alone", category: "表达", label: "live alone", alternatives: ["live alone", "living alone"], advice: "“独居”可用 live alone。" }], collocations: [{ id: "prediction-practical-difficulties", expression: "practical difficulties", meaning: "实际困难", example: "Volunteers help residents deal with practical difficulties." }] },
+      { id: "prediction-full-3", order: 3, sourceText: "这样的服务不仅提高了老年人的生活质量，也让邻里关系更加紧密。", referenceText: "Such services not only improve older people's quality of life but also bring neighbors closer together.", rubric: [{ id: "prediction-quality-life", category: "搭配", label: "quality of life", alternatives: ["quality of life"], advice: "“生活质量”常用 quality of life。" }, { id: "prediction-not-only", category: "语法", label: "not only ... but also", alternatives: ["not only", "but also"], advice: "并列强调可用 not only ... but also。" }], collocations: [{ id: "prediction-bring-closer", expression: "bring neighbors closer together", meaning: "让邻里关系更紧密", example: "Community activities bring neighbors closer together." }] },
+    ],
+  },
+];
+
 export function isVerifiedPastPaper(set) { return set.kind === "past-paper" && Boolean(set.exam?.year && set.exam?.month && set.exam?.paper && set.exam?.sourceName && /^https:\/\//.test(set.exam?.sourceUrl || "")); }
 export function getExtraPractice(state, limit = 3) { return [...trainingSets].filter((set) => !state.submissions[set.id]).sort((a, b) => Number(isVerifiedPastPaper(b)) - Number(isVerifiedPastPaper(a))).slice(0, limit); }
 export function canSubmitAttempt(answers) { return Array.isArray(answers) && answers.length === 2 && answers.every((answer) => String(answer || "").trim()); }
+export function canSubmitPassage(answer) {
+  const text = String(answer || "").trim();
+  return text.split(/\s+/).filter(Boolean).length >= 3 && /[.!?]["')\]]*$/.test(text);
+}
+export function getPassageForDate(date) {
+  const verified = fullPassageSets.filter(isVerifiedPastPaper);
+  const day = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+  return verified[((day % verified.length) + verified.length) % verified.length] || fullPassageSets[0];
+}
+export function getExtraPassagePractice(state, limit = 3) { return [...fullPassageSets].filter((set) => !state.submissions[set.id]).sort((a, b) => Number(isVerifiedPastPaper(b)) - Number(isVerifiedPastPaper(a))).slice(0, limit); }
+export function splitPassageAnswer(passage, answer) {
+  const fullAnswer = String(answer || "").trim();
+  const sentences = fullAnswer.match(/[^.!?]+[.!?]+(?:["')\]]*)/g)?.map((item) => item.trim()) || [];
+  const reconstructed = sentences.join(" ").replace(/\s+/g, " ").trim();
+  if (sentences.length === passage.sentences.length && reconstructed === fullAnswer.replace(/\s+/g, " ").trim()) return { alignment: "exact", answers: sentences };
+  return { alignment: "approximate", answers: passage.sentences.map(() => fullAnswer) };
+}
+export function gradePassage(passage, answer) {
+  const split = splitPassageAnswer(passage, answer);
+  const results = passage.sentences.map((sentence, index) => gradeSentence(sentence, split.answers[index]));
+  const coverage = results.length ? Math.round(results.reduce((total, result) => total + result.coverage, 0) / results.length) : 0;
+  const completeAnswer = String(answer || "").trim();
+  return { ...split, answer: completeAnswer, results, coverage, wordCount: completeAnswer ? completeAnswer.split(/\s+/).length : 0 };
+}
 const adviceByCategory = { "词汇": "每天选 3 个主题词：先遮住英文口头说出，再用其中 1 个写完整句。", "搭配": "把本周遗漏的搭配抄成“中文提示 → 英文搭配”，每天做 5 组替换。", "语法": "先圈出中文主干，再只写英文主干；确认主谓和时态后再补修饰。", "表达": "把参考译文中的句式骨架摘出，替换主题词后重写一遍。" };
 export function getPracticeAdvice(state) { return Object.values(state.mistakes).sort((a, b) => b.count - a.count).reduce((list, item) => list.some((x) => x.category === item.category) ? list : [...list, { category: item.category, text: adviceByCategory[item.category] }], []).slice(0, 2); }
 
