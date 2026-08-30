@@ -11,9 +11,6 @@ importers:
       '@netlify/blobs':
         specifier: ^11.0.2
         version: 11.0.2
-      '@netlify/identity':
-        specifier: ^2.0.0
-        version: 2.0.0
 
 packages:
 
@@ -30,10 +27,6 @@ packages:
 
   '@netlify/dev-utils@6.0.1':
     resolution: {integrity: sha512-q5g70dO3q/M/XTBQz7uIECJxVlJoS8UBlzpjf22DV6q61UzXa8EONTPXPmvisrFcUi1I3AUKplPcHGQYZZj+Vw==}
-    engines: {node: '>=22.12.0'}
-
-  '@netlify/identity@2.0.0':
-    resolution: {integrity: sha512-AX2zdazgfa9M/L22kgC5TpuVgofz9ZkK0W7JRIqmW/In6LyW6HzLS2K9a3CPXlfcjWm1JqEdmXoXze3VIjes6Q==}
     engines: {node: '>=22.12.0'}
 
   '@netlify/otel@7.0.2':
@@ -165,9 +158,6 @@ packages:
   es-module-lexer@2.3.2:
     resolution: {integrity: sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==}
 
-  gotrue-js@1.0.1:
-    resolution: {integrity: sha512-ZynwwM4bEo2y5yNWO3/Ynbx1AvQz9ONJSM9tB1jpooAvDPevGdvgeFP3NwM59FAlkd0szSkQRAhjINMkJSDfAQ==}
-
   import-in-the-middle@3.3.3:
     resolution: {integrity: sha512-AiohS3H80sXO6owEltjGX+glb7qXaDhBoJb9XcQVH4UI207xu/bDLUcadVKp7Qe576reg9yr/PXZjV5qx8gfbA==}
     engines: {node: '>=18'}
@@ -244,10 +234,6 @@ snapshots:
       env-paths: 3.0.0
       parse-gitignore: 2.0.0
       semver: 7.8.5
-
-  '@netlify/identity@2.0.0':
-    dependencies:
-      gotrue-js: 1.0.1
 
   '@netlify/otel@7.0.2':
     dependencies:
@@ -378,8 +364,6 @@ snapshots:
   env-paths@3.0.0: {}
 
   es-module-lexer@2.3.2: {}
-
-  gotrue-js@1.0.1: {}
 
   import-in-the-middle@3.3.3:
     dependencies:

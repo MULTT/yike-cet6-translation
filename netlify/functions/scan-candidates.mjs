@@ -1,5 +1,7 @@
 import { queueCandidate } from "../../lib/review-service.mjs";
 import { createPassageBlobStore } from "../../lib/netlify-blob-store.mjs";
+import { canAutoPublish } from "../../lib/auto-publish-policy.mjs";
+import { reviewCandidate } from "../../lib/review-service.mjs";
 
 export const config = { schedule: "@daily" };
 
@@ -14,7 +16,7 @@ function isSecureUrl(value) {
 export default async () => {
   const store = createPassageBlobStore();
   const feedUrl = process.env.CET6_CANDIDATE_FEED_URL;
-  const scan = { scannedAt: new Date().toISOString(), queued: 0, skipped: 0, errors: [] };
+  const scan = { scannedAt: new Date().toISOString(), published: 0, skipped: 0, errors: [] };
 
   try {
     if (!isSecureUrl(feedUrl)) {
@@ -31,8 +33,10 @@ export default async () => {
 
     for (const candidate of candidates) {
       try {
-        await queueCandidate(store, candidate);
-        scan.queued += 1;
+        if (!canAutoPublish(candidate)) throw new Error("候选题未通过自动发布来源与完整性校验。");
+        const queued = await queueCandidate(store, { ...candidate, sourceVerified: true });
+        await reviewCandidate(store, queued.id, "publish", "automatic-source-policy");
+        scan.published += 1;
       } catch (error) {
         scan.skipped += 1;
         scan.errors.push(error instanceof Error ? error.message : "候选题处理失败。");
