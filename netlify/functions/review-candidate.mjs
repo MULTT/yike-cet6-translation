@@ -1,12 +1,7 @@
 import { reviewCandidate } from "../../lib/review-service.mjs";
 import { candidateKey, createPassageBlobStore } from "../../lib/netlify-blob-store.mjs";
-
-function isAuthorized(request) {
-  const configuredToken = process.env.ADMIN_REVIEW_TOKEN;
-  const suppliedToken = request.headers.get("x-admin-review-token")
-    || request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  return Boolean(configuredToken && suppliedToken && suppliedToken === configuredToken);
-}
+import { getUser } from "@netlify/identity";
+import { isAdminUser } from "../../lib/admin-auth.mjs";
 
 async function readJson(request) {
   try {
@@ -17,9 +12,10 @@ async function readJson(request) {
 }
 
 export default async (request) => {
-  if (!isAuthorized(request)) {
-    return Response.json({ error: "管理员身份验证失败。" }, { status: 401 });
-  }
+  const user = await getUser();
+  if (!user) return Response.json({ error: "请先以管理员身份登录。" }, { status: 401 });
+  if (!isAdminUser(user)) return Response.json({ error: "当前账号没有审核权限。" }, { status: 403 });
+  const reviewer = user.email || user.id;
 
   const store = createPassageBlobStore();
   if (request.method === "GET") {
@@ -32,7 +28,10 @@ export default async (request) => {
   }
 
   try {
-    const { id, decision, reviewer, sourceVerified } = await readJson(request);
+    const { id, decision, sourceVerified, rejectionReason } = await readJson(request);
+    if (decision === "reject" && !String(rejectionReason || "").trim()) {
+      return Response.json({ error: "拒绝候选题时请填写原因。" }, { status: 400 });
+    }
     if (sourceVerified === true) {
       const candidate = await store.get(candidateKey(id));
       if (!candidate || candidate.status !== "pending") {
@@ -42,10 +41,14 @@ export default async (request) => {
         ...candidate,
         sourceVerified: true,
         sourceVerifiedAt: new Date().toISOString(),
-        sourceVerifier: String(reviewer || "").trim(),
+        sourceVerifier: reviewer,
       });
     }
     const candidate = await reviewCandidate(store, id, decision, reviewer);
+    if (decision === "reject") {
+      candidate.rejectionReason = String(rejectionReason).trim();
+      await store.set(candidateKey(id), candidate);
+    }
     return Response.json({ candidate });
   } catch (error) {
     const message = error instanceof Error ? error.message : "审核失败。";
