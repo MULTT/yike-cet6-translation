@@ -7,6 +7,7 @@
     <meta name="theme-color" content="#f6f0e4" />
     <title>译刻｜六级翻译每日练习</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="upload.css" />
   </head>
   <body>
     <main class="app-shell">
@@ -16,6 +17,7 @@
         <nav class="primary-nav" aria-label="学习导航">
           <button class="nav-item active" type="button" data-view="practice"><span>✦</span> 今日训练</button>
           <button class="nav-item" type="button" data-view="library"><span>▦</span> 真题题库</button>
+          <button class="nav-item" type="button" data-view="upload"><span>↑</span> 上传题目</button>
           <button class="nav-item" type="button" data-view="reports"><span>◫</span> 我的报告</button>
           <button class="nav-item" type="button" data-view="mistakes"><span>⌁</span> 易错点 <i id="mistake-count">0</i></button>
           <button class="nav-item" type="button" data-view="review"><span>▱</span> 复习本 <i id="review-count">0</i></button>
@@ -30,11 +32,13 @@
     <nav class="mobile-nav" aria-label="学习导航">
       <button class="active" data-view="practice" type="button">✦<span>训练</span></button>
       <button data-view="library" type="button">▦<span>题库</span></button>
+      <button data-view="upload" type="button">↑<span>上传</span></button>
       <button data-view="reports" type="button">◫<span>报告</span></button>
       <button data-view="mistakes" type="button">⌁<span>易错</span></button>
       <button data-view="review" type="button">▱<span>复习</span></button>
     </nav>
     <template id="toast-template"><div class="toast" role="status"></div></template>
+    <script src="vendor/tesseract.min.js"></script>
     <script type="module" src="app.mjs"></script>
   </body>
 </html>

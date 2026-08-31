@@ -1,0 +1,18 @@
+.uploaded-library{margin-top:34px;padding-top:24px;border-top:1px solid var(--rule)}
+.section-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:14px}
+.section-heading h2,.ocr-panel h2{font:600 18px/1.4 "Noto Serif SC",serif;margin:0}
+.uploaded-paper-list{display:grid;gap:12px}
+.uploaded-paper-card{display:grid;grid-template-columns:148px 1fr;gap:16px;padding:15px;background:var(--white);border:1px solid #e5dacb;border-radius:8px}
+.uploaded-paper-card img{width:148px;height:112px;object-fit:cover;border-radius:5px;background:#efe7d8}
+.uploaded-image-link{display:grid;gap:5px;color:var(--moss-deep);font:600 10px Manrope;text-decoration:none}
+.uploaded-paper-card h3{font:600 15px/1.4 "Noto Serif SC",serif;margin:9px 0 4px}
+.uploaded-paper-card p{white-space:pre-wrap;font:500 11px/1.65 "Noto Serif SC",serif;color:#77736b;margin:0;max-height:110px;overflow:auto}
+.upload-form{max-width:760px}.upload-meta{display:flex;gap:12px;margin-bottom:16px}
+.upload-meta label{display:grid;gap:7px;color:#6b6a62;font:600 11px Manrope}
+.upload-meta input,.upload-meta select{min-height:40px;border:1px solid #d8cdbd;border-radius:7px;background:#fffcf5;color:var(--ink);padding:0 11px;font:600 13px Manrope}
+.upload-photo-box{margin:0}.user-paper-preview{min-height:2px}
+.user-paper-preview img{display:block;width:min(100%,350px);max-height:260px;object-fit:contain;border:1px solid var(--rule);border-radius:6px;margin-top:12px;background:#fff}
+.ocr-panel{display:flex;justify-content:space-between;align-items:center;gap:20px;border-top:1px dashed #d7cabb;border-bottom:1px dashed #d7cabb;padding:18px 0;margin:22px 0 14px}
+.ocr-panel .quiet{margin:6px 0 0}.ocr-text-label{display:grid;gap:8px;color:#6b6a62;font:600 11px Manrope}.ocr-text-label textarea{min-height:190px}
+.secondary-button:disabled,.primary-button:disabled{opacity:.55;cursor:wait}
+@media(max-width:760px){.mobile-nav button{min-width:42px}.uploaded-paper-card{grid-template-columns:1fr}.uploaded-paper-card img{width:100%;height:180px}.section-heading,.ocr-panel{align-items:stretch;flex-direction:column}.upload-meta{display:grid;grid-template-columns:1fr 1fr}.ocr-panel .secondary-button{width:100%}}

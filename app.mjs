@@ -4,6 +4,7 @@ import {
   canSubmitPassage, fullPassageSets, getExtraPassagePractice, getPassageForDate, gradePassage,
 } from "./core.mjs";
 import { deleteAttemptImage, saveAttemptImage, validateImageFile } from "./image-store.mjs";
+import { buildUserPaperFormData, formatOcrProgress, validateUserPaperUpload } from "./lib/user-paper-upload.mjs";
 
 const content = document.querySelector("#app-content");
 const today = new Date();
@@ -13,6 +14,10 @@ let activeView = "practice";
 let selectedSetId = getPassageForDate(today).id;
 let reviewFilter = "pending";
 let pendingPhoto = null;
+let pendingUserPaper = null;
+let userPapers = [];
+let userPapersLoaded = false;
+let userPapersError = "";
 
 function currentSet() { return fullPassageSets.find((set) => set.id === selectedSetId) || getPassageForDate(today); }
 function escapeHtml(value) { return String(value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char])); }
@@ -88,8 +93,92 @@ function renderReview() {
 
 function renderLibrary() {
   const cards = fullPassageSets.map((set) => `<article class="phrase-card"><div class="phrase-main"><span class="phrase-status ${set.kind === "past-paper" ? "mastered" : ""}">${set.kind === "past-paper" ? `${set.exam.year} 年 ${set.exam.month} 月 ${set.exam.paper} 真题` : "原创预测 · 非真题"}</span><h3>${escapeHtml(set.theme)}</h3><p>${escapeHtml(set.sourceLabel)} · 整篇翻译</p></div><button class="master-button" data-library-set="${set.id}">${hasSubmitted(set.id) ? "查看报告" : "开始练习"}</button></article>`).join("");
-  content.innerHTML = `<header class="topbar"><div><p class="eyebrow">PAPER LIBRARY</p><h1>真题可核验，<br>加练随时开始。</h1></div></header><section class="view-intro"><div><p class="section-kicker">题库</p><h2>真题、训练与预测分开记录。</h2></div></section><div class="phrase-list">${cards}</div>`;
+  const uploadedCards = userPapers.length ? userPapers.map((paper) => `<article class="uploaded-paper-card"><a class="uploaded-image-link" href="${userPaperImageUrl(paper)}" target="_blank" rel="noreferrer"><img src="${userPaperImageUrl(paper)}" alt="${paper.year} 年 ${paper.month} 月上传题图"><span>查看原图 ↗</span></a><div><span class="phrase-status">用户上传题目 · ${paper.year} 年 ${paper.month} 月</span><h3>${paper.ocrText ? "已识别并校对的题目" : "题图已保存，待补录文字"}</h3><p>${paper.ocrText ? escapeHtml(paper.ocrText) : "目前仅保存题图；查看原图可直接阅读题目。"}</p></div></article>`).join("") : `<p class="quiet">${userPapersError || "还没有上传题目。可从“上传题目”添加自己的历年题图。"}</p>`;
+  content.innerHTML = `<header class="topbar"><div><p class="eyebrow">PAPER LIBRARY</p><h1>真题可核验，<br>加练随时开始。</h1></div></header><section class="view-intro"><div><p class="section-kicker">题库</p><h2>真题、训练与预测分开记录。</h2></div></section><div class="phrase-list">${cards}</div><section class="uploaded-library"><div class="section-heading"><div><p class="section-kicker">共享上传题库</p><h2>你补充的题图与识别文字。</h2></div><button class="secondary-button" type="button" data-empty-view="upload">上传题目</button></div><p class="local-note">这里的上传题会在题库中公开展示，请勿上传私人信息。</p><div class="uploaded-paper-list">${userPapersLoaded ? uploadedCards : "<p class=quiet>正在读取已上传的题目…</p>"}</div></section>`;
   document.querySelectorAll("[data-library-set]").forEach((button) => button.addEventListener("click", () => { selectedSetId = button.dataset.librarySet; activeView = "practice"; render(); }));
+  if (!userPapersLoaded) loadUserPapers();
+}
+
+function userPaperImageUrl(paper) { return `/.netlify/functions/user-papers?image=${encodeURIComponent(paper.id)}`; }
+
+async function loadUserPapers() {
+  try {
+    const response = await fetch("/.netlify/functions/user-papers");
+    if (!response.ok) throw new Error("读取失败");
+    const result = await response.json();
+    userPapers = Array.isArray(result.papers) ? result.papers : [];
+    userPapersError = "";
+  } catch {
+    userPapersError = "已上传题目暂时无法读取，请稍后再试。";
+  } finally {
+    userPapersLoaded = true;
+    if (activeView === "library") renderLibrary();
+  }
+}
+
+function renderUpload() {
+  const currentYear = today.getFullYear();
+  content.innerHTML = `<header class="topbar"><div><p class="eyebrow">LOCAL OCR · UPLOAD</p><h1>把你的题图，<br>放进上传题库。</h1></div></header><section class="view-intro"><div><p class="section-kicker">上传题目</p><h2>只填年份、月份，上传图片即可。</h2></div><p>文字识别在浏览器中完成；首次会联网下载开源识别模型，题图不会发送给 OCR 服务。</p></section><form id="user-paper-form" class="upload-form" novalidate><div class="upload-meta"><label>年份<input id="user-paper-year" type="number" inputmode="numeric" min="2000" max="${currentYear}" value="${currentYear}" required></label><label>月份<select id="user-paper-month" required><option value="6">6 月</option><option value="12">12 月</option></select></label></div><section class="photo-box upload-photo-box"><div><p class="section-kicker">题目图片</p><b>拍照或选择一张翻译真题图片。</b><small>支持常见图片格式，最大 8MB；题图将公开保存到在线题库。</small></div><label class="photo-upload" for="user-paper-image">＋ 上传或拍照<input id="user-paper-image" type="file" accept="image/*" capture="environment" hidden></label><div id="user-paper-preview" class="user-paper-preview">${pendingUserPaper ? `<img src="${pendingUserPaper.url}" alt="待上传题图">` : ""}</div></section><p id="user-paper-error" class="input-error"></p><section class="ocr-panel"><div><p class="section-kicker">本地 OCR</p><h2>先识别，再手动校对。</h2><p id="ocr-status" class="quiet">选择题图后即可开始识别。</p></div><button id="run-ocr" class="secondary-button" type="button" ${pendingUserPaper ? "" : "disabled"}>识别图片文字</button></section><label class="ocr-text-label" for="ocr-text">识别出的文字（可编辑）<textarea id="ocr-text" rows="10" placeholder="识别结果会出现在这里；也可以手动补录题目文字。"></textarea></label><div class="submit-row"><p><span>提示</span>只要求年份、月份和题图；OCR 文字可以稍后再补。</p><button class="primary-button" type="submit">保存到上传题库 <span>→</span></button></div></form>`;
+  bindUploadEvents();
+}
+
+function bindUploadEvents() {
+  const form = document.querySelector("#user-paper-form");
+  const imageInput = document.querySelector("#user-paper-image");
+  const ocrButton = document.querySelector("#run-ocr");
+  const error = document.querySelector("#user-paper-error");
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+    const verdict = validateUserPaperUpload({ year: document.querySelector("#user-paper-year").value, month: document.querySelector("#user-paper-month").value, image: file });
+    if (!file || !verdict.ok) { error.textContent = verdict.message; return; }
+    if (file.size > 8 * 1024 * 1024) { error.textContent = "图片不能超过 8MB。"; return; }
+    if (pendingUserPaper?.url) URL.revokeObjectURL(pendingUserPaper.url);
+    pendingUserPaper = { file, url: URL.createObjectURL(file) };
+    document.querySelector("#user-paper-preview").innerHTML = `<img src="${pendingUserPaper.url}" alt="待上传题图">`;
+    ocrButton.disabled = false;
+    error.textContent = "";
+  });
+  ocrButton.addEventListener("click", async () => {
+    if (!pendingUserPaper) return;
+    if (!window.Tesseract?.createWorker) { error.textContent = "本地识别组件尚未加载，请刷新后重试。"; return; }
+    const status = document.querySelector("#ocr-status");
+    ocrButton.disabled = true;
+    try {
+      const worker = await window.Tesseract.createWorker("chi_sim+eng", 1, { workerPath: "/vendor/worker.min.js", logger: ({ status: stage, progress }) => { status.textContent = typeof progress === "number" ? `正在${stage}：${formatOcrProgress(progress)}` : `正在${stage}…`; } });
+      const result = await worker.recognize(pendingUserPaper.file);
+      document.querySelector("#ocr-text").value = result.data.text.trim();
+      await worker.terminate();
+      status.textContent = "识别完成，请先校对文字再保存。";
+    } catch {
+      status.textContent = "识别未完成。你仍可手动补录文字后保存题图。";
+    } finally {
+      ocrButton.disabled = false;
+    }
+  });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const year = document.querySelector("#user-paper-year").value;
+    const month = document.querySelector("#user-paper-month").value;
+    const verdict = validateUserPaperUpload({ year, month, image: pendingUserPaper?.file });
+    if (!verdict.ok) { error.textContent = verdict.message; return; }
+    const submitButton = form.querySelector("[type=submit]");
+    submitButton.disabled = true;
+    try {
+      const response = await fetch("/.netlify/functions/user-papers", { method: "POST", body: buildUserPaperFormData({ year, month, image: pendingUserPaper.file, ocrText: document.querySelector("#ocr-text").value }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "保存失败");
+      userPapers = [result.paper, ...userPapers];
+      userPapersLoaded = true;
+      URL.revokeObjectURL(pendingUserPaper.url);
+      pendingUserPaper = null;
+      activeView = "library";
+      render();
+      toast("题图和识别文字已保存到题库。", "success");
+    } catch (saveError) {
+      error.textContent = saveError.message || "保存失败，请稍后重试。";
+      submitButton.disabled = false;
+    }
+  });
 }
 
 function renderReports() {
@@ -103,5 +192,5 @@ function bindNav() {
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.view; render(); }));
   document.querySelector("#reset-button").addEventListener("click", () => { if (window.confirm("确定要清空所有练习记录、易错点和复习本吗？此操作无法撤销。")) { window.localStorage.removeItem(STORAGE_KEY); state = loadLearningState(window.localStorage); selectedSetId = getPassageForDate(today).id; activeView = "practice"; render(); toast("本地学习记录已重置。", "success"); } });
 }
-function render() { updateShell(); if (activeView === "practice") renderPractice(); else if (activeView === "mistakes") renderMistakes(); else if (activeView === "library") renderLibrary(); else if (activeView === "reports") renderReports(); else renderReview(); document.querySelectorAll("[data-empty-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.emptyView; if (activeView === "review") reviewFilter = "pending"; render(); })); }
+function render() { updateShell(); if (activeView === "practice") renderPractice(); else if (activeView === "mistakes") renderMistakes(); else if (activeView === "library") renderLibrary(); else if (activeView === "reports") renderReports(); else if (activeView === "upload") renderUpload(); else renderReview(); document.querySelectorAll("[data-empty-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.emptyView; if (activeView === "review") reviewFilter = "pending"; render(); })); }
 bindNav(); render();

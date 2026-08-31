@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test core.test.mjs image-store.test.mjs lib/*.test.mjs",
-    "build": "node --check core.mjs && node --check app.mjs && node --check image-store.mjs && node --check lib/netlify-blob-store.mjs && node --check lib/auto-publish-policy.mjs && node --check netlify/functions/passages.mjs && node --check netlify/functions/scan-candidates.mjs"
+    "test": "node --test core.test.mjs image-store.test.mjs lib/*.test.mjs netlify/functions/*.test.mjs",
+    "build": "node --check core.mjs && node --check app.mjs && node --check image-store.mjs && node --check lib/netlify-blob-store.mjs && node --check lib/auto-publish-policy.mjs && node --check lib/user-paper-upload.mjs && node --check netlify/functions/passages.mjs && node --check netlify/functions/scan-candidates.mjs && node --check netlify/functions/user-papers.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.0.2"
